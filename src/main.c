@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #define ERROR(text) (printf("%s: %s \n", text, SDL_GetError()))
 #define YELLOW {255, 255, 0, 255}
@@ -25,6 +28,9 @@ float random_float(float min, float max);
 int collision(SDL_Rect*, SDL_Rect*);
 SDL_Texture* CreateTextureFromImage(SDL_Surface* surface, const char* image, SDL_Renderer* renderer, SDL_Window* window);
 int main() {
+#ifdef _WIN32
+    SetProcessDPIAware();
+#endif
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         ERROR("SDL_Init_VIDEO");
         return 1;
