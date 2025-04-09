@@ -1,3 +1,4 @@
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -9,7 +10,7 @@
 #include <windows.h>
 #endif
 
-#define ERROR(text) (printf("%s: %s \n", text, SDL_GetError()))
+#define SDL_ERROR(text) (printf("%s: %s \n", text, SDL_GetError()))
 #define YELLOW {255, 255, 0, 255}
 #define RED {255, 0, 0, 255}
 #define BLUE {0,0,255,255}
@@ -27,41 +28,41 @@ void normalize(Vector2* vec);
 float random_float(float min, float max);
 int collision(SDL_Rect*, SDL_Rect*);
 SDL_Texture* CreateTextureFromImage(SDL_Surface* surface, const char* image, SDL_Renderer* renderer, SDL_Window* window);
-int main() {
+int main(int argc, char* argv[]) {
 #ifdef _WIN32
     SetProcessDPIAware();
 #endif
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        ERROR("SDL_Init_VIDEO");
+        SDL_ERROR("SDL_Init_VIDEO");
         return 1;
     }
 
     if (SDL_Init(IMG_INIT_PNG) != 0) {
-        ERROR("SDL_Init_PNG");
+        SDL_ERROR("SDL_Init_PNG");
         return 1;
     }
     if (TTF_Init() != 0) {
-        ERROR("TTF_Init()");
+        SDL_ERROR("TTF_Init()");
         SDL_Quit();
         return 1;
     }
     SDL_Window* window = SDL_CreateWindow("Bee game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     if (!window) {
-        ERROR("SDL_CreateWindow");
+        SDL_ERROR("SDL_CreateWindow");
         SDL_Quit();
         return 1;
     }
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
-        ERROR("SDL_CreateRenderer");
+        SDL_ERROR("SDL_CreateRenderer");
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
     }
     TTF_Font* font = TTF_OpenFont(FONT_PATH "font.ttf", 24);
     if (!font) {
-        ERROR("font");
+        SDL_ERROR("font");
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -119,6 +120,8 @@ int main() {
     float speed = 500.0f;
     unsigned int lastTime = SDL_GetTicks();
     float deltaTime = 0.0f;
+    // Use floating point position for smooth movement
+    Vector2 bee_pos = { bee.x, bee.y };
     while (running) {
         if (has_food) sprintf(buffer, "has_food");
         else sprintf(buffer, "no food");
@@ -155,12 +158,17 @@ int main() {
         bee_direction.y += random_float(-1.0f, 1.0f);
 
         normalize(&bee_direction);
-        bee.x += roundf(speed * bee_direction.x * deltaTime);
-        bee.y += roundf(speed * bee_direction.y * deltaTime);
-        bee.x = fmax(bee.x, 0);
-        bee.y = fmin(bee.y, SCREEN_HEIGHT - bee.h);
-        bee.y = fmax(bee.y, 0);
-        bee.x = fmin(bee.x, SCREEN_WIDTH - bee.w);
+        // Update bee position using floating point math
+        bee_pos.x += speed * bee_direction.x * deltaTime;
+        bee_pos.y += speed * bee_direction.y * deltaTime;
+
+        // Clamp position to stay inside screen bounds
+        bee_pos.x = fmaxf(0, fminf(bee_pos.x, SCREEN_WIDTH - bee.w));
+        bee_pos.y = fmaxf(0, fminf(bee_pos.y, SCREEN_HEIGHT - bee.h));
+
+        // Update integer position for rendering
+        bee.x = (int)roundf(bee_pos.x);
+        bee.y = (int)roundf(bee_pos.y);
         for (int i = 0; i < FLOWER_COUNT; i++) {
             if (collision(flowers + i, &bee)) {        
                 if (!has_food && !is_unlit[i]) {
