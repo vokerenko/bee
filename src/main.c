@@ -116,7 +116,7 @@ int main() {
         litness[i] = 1.0f;
         flower_timer[i] =0.0f;
     }
-    float speed = 10.0f;
+    float speed = 500.0f;
     unsigned int lastTime = SDL_GetTicks();
     float deltaTime = 0.0f;
     while (running) {
@@ -155,8 +155,8 @@ int main() {
         bee_direction.y += random_float(-1.0f, 1.0f);
 
         normalize(&bee_direction);
-        bee.x += roundf(speed * bee_direction.x);
-        bee.y += roundf(speed * bee_direction.y);
+        bee.x += roundf(speed * bee_direction.x * deltaTime);
+        bee.y += roundf(speed * bee_direction.y * deltaTime);
         bee.x = fmax(bee.x, 0);
         bee.y = fmin(bee.y, SCREEN_HEIGHT - bee.h);
         bee.y = fmax(bee.y, 0);
