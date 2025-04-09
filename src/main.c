@@ -66,18 +66,27 @@ int main() {
     SDL_Surface* surface;
     SDL_Rect text = {700, 50, 200, 50};
     SDL_Texture* hive_texture = CreateTextureFromImage(surface,IMG_PATH "hive.png", renderer, window);
-    SDL_Texture* bee_texture = CreateTextureFromImage(surface, IMG_PATH "bee.png", renderer, window);
+    SDL_Texture* bee_texture = CreateTextureFromImage(surface, IMG_PATH "bee_nowings.png", renderer, window);
+    SDL_Texture* bee_wings_texture = CreateTextureFromImage(surface, IMG_PATH "bee_wings.png", renderer, window);
+    SDL_Texture* bee_wings_hands_texture = CreateTextureFromImage(surface, IMG_PATH "bee_wings_hands.png", renderer, window);
+    SDL_Texture* bee_hands_texture = CreateTextureFromImage(surface, IMG_PATH "bee_nowings_hands.png", renderer, window);
+    
     SDL_Texture* flower_texture = CreateTextureFromImage(surface,IMG_PATH "flower_lit.png", renderer, window);
     SDL_Texture* flower_unlit_texture = CreateTextureFromImage(surface,IMG_PATH "flower_unlit.png", renderer, window);
     SDL_Texture* background_texture = CreateTextureFromImage(surface,IMG_PATH "background.png", renderer, window);
     SDL_Rect hive = {450, 450, 300, 342};
-    SDL_Rect bee = {300, 300,100, 121};
+    SDL_Rect bee = {300, 300,308/2, 300/2};
+    int wings = 1;
+    float bee_wings_timer = 0.0f;
     int has_food = 0;
+    int direction = 0; // 0 - left, 1 - right
     SDL_Rect background = {0, 0, 900, 900};
 #define FLOWER_COUNT 15
     SDL_Rect flowers[FLOWER_COUNT];
     int is_unlit[FLOWER_COUNT];
     float litness[FLOWER_COUNT];
+    float flower_timer[FLOWER_COUNT];
+    
     for (int i = 0; i < FLOWER_COUNT; i++) {
         int x, y;
         int collides_with_flowers;
@@ -97,6 +106,7 @@ int main() {
         } while(collision(&flowers[i], &hive) || collides_with_flowers);
         is_unlit[i] = 0;
         litness[i] = 1.0f;
+        flower_timer[i] =0.0f;
     }
     float speed = 3.0f;
     unsigned int lastTime = SDL_GetTicks();
@@ -118,9 +128,11 @@ int main() {
         const char *state = SDL_GetKeyboardState(NULL);
         if (state[SDL_SCANCODE_LEFT]) {
             bee_direction.x -= 1.0f;
+            direction = 0;
         }
         if (state[SDL_SCANCODE_RIGHT]) {
             bee_direction.x += 1.0f;
+            direction = 1;
         }
         if (state[SDL_SCANCODE_UP]) {
             bee_direction.y -= 1.0f;
@@ -150,6 +162,24 @@ int main() {
                         has_food = 1;
                         is_unlit[i] = 1;
                     }
+                    break;
+                }
+            }
+        }
+        bee_wings_timer += deltaTime;
+        if (bee_wings_timer >= 1.0f / 16) {
+            bee_wings_timer = 0.0f;
+            if (wings) wings = 0;
+            else wings = 1;
+        }
+
+        for (int i = 0; i < FLOWER_COUNT; i++) {
+            if (is_unlit[i]) {
+                flower_timer[i] += deltaTime;
+#define FLOWER_TIMER 7.0f
+                if (flower_timer[i] >= FLOWER_TIMER) {
+                    is_unlit[i] = 0;
+                    flower_timer[i] = 0.0f;
                 }
             }
         }
@@ -167,8 +197,20 @@ int main() {
         }
         SDL_RenderCopy(renderer, hive_texture, NULL, &hive);
 
+        int flip;
+        if (direction) flip = SDL_FLIP_HORIZONTAL;
+        else flip = SDL_FLIP_NONE;
+        if (wings) {
+            SDL_Texture* texture = bee_wings_texture;
+            if (has_food) texture = bee_wings_hands_texture;
+            SDL_RenderCopyEx(renderer, texture, NULL, &bee, 0.0, NULL, flip);
+        }
+        else {
+            SDL_Texture* texture = bee_texture;
+            if (has_food) texture = bee_hands_texture;
+            SDL_RenderCopyEx(renderer, texture, NULL, &bee, 0.0, NULL, flip);
+        }
 
-        SDL_RenderCopy(renderer, bee_texture, NULL, &bee);
         SDL_RenderCopy(renderer, text_texture, NULL, &text);
 
         SDL_RenderPresent(renderer);
