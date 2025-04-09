@@ -13,6 +13,8 @@
 #define GREEN {0,255,0,255}
 #define IMG_PATH "res/img/"
 #define FONT_PATH "res/font/"
+#define SCREEN_WIDTH 1920
+#define SCREEN_HEIGHT 1080
 
 typedef struct {
     float x;
@@ -37,7 +39,7 @@ int main() {
         SDL_Quit();
         return 1;
     }
-    SDL_Window* window = SDL_CreateWindow("Bee game", 100, 100, 900, 900, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow("Bee game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     if (!window) {
         ERROR("SDL_CreateWindow");
@@ -64,7 +66,7 @@ int main() {
     srand(time(0));
     SDL_Event event;
     SDL_Surface* surface;
-    SDL_Rect text = {700, 50, 200, 50};
+    SDL_Rect text = {SCREEN_WIDTH - 200, 0 + 50, 200, 50};
     SDL_Texture* hive_texture = CreateTextureFromImage(surface,IMG_PATH "hive.png", renderer, window);
     SDL_Texture* bee_texture = CreateTextureFromImage(surface, IMG_PATH "bee_nowings.png", renderer, window);
     SDL_Texture* bee_wings_texture = CreateTextureFromImage(surface, IMG_PATH "bee_wings.png", renderer, window);
@@ -73,14 +75,14 @@ int main() {
     
     SDL_Texture* flower_texture = CreateTextureFromImage(surface,IMG_PATH "flower_lit.png", renderer, window);
     SDL_Texture* flower_unlit_texture = CreateTextureFromImage(surface,IMG_PATH "flower_unlit.png", renderer, window);
-    SDL_Texture* background_texture = CreateTextureFromImage(surface,IMG_PATH "background.png", renderer, window);
-    SDL_Rect hive = {450, 450, 300, 342};
+    SDL_Texture* background_texture = CreateTextureFromImage(surface,IMG_PATH "background_copy.png", renderer, window);
+    SDL_Rect hive = {SCREEN_WIDTH - 500, SCREEN_HEIGHT - 400, 300, 342};
     SDL_Rect bee = {300, 300,308/2, 300/2};
     int wings = 1;
     float bee_wings_timer = 0.0f;
     int has_food = 0;
     int direction = 0; // 0 - left, 1 - right
-    SDL_Rect background = {0, 0, 900, 900};
+    SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 #define FLOWER_COUNT 15
     SDL_Rect flowers[FLOWER_COUNT];
     int is_unlit[FLOWER_COUNT];
@@ -92,8 +94,8 @@ int main() {
         int collides_with_flowers;
         do {
             collides_with_flowers = 0;
-            x = rand() % 800;
-            y = rand() % 700;
+            x = rand() % (SCREEN_WIDTH - 100);
+            y = rand() % (SCREEN_HEIGHT - 117);
             flowers[i].x = x;
             flowers[i].y = y;
             flowers[i].w = 100;
@@ -108,7 +110,7 @@ int main() {
         litness[i] = 1.0f;
         flower_timer[i] =0.0f;
     }
-    float speed = 3.0f;
+    float speed = 10.0f;
     unsigned int lastTime = SDL_GetTicks();
     float deltaTime = 0.0f;
     while (running) {
@@ -150,9 +152,9 @@ int main() {
         bee.x += roundf(speed * bee_direction.x);
         bee.y += roundf(speed * bee_direction.y);
         bee.x = fmax(bee.x, 0);
-        bee.y = fmin(bee.y, 900 - bee.h);
+        bee.y = fmin(bee.y, SCREEN_HEIGHT - bee.h);
         bee.y = fmax(bee.y, 0);
-        bee.x = fmin(bee.x, 900 - bee.w);
+        bee.x = fmin(bee.x, SCREEN_WIDTH - bee.w);
         for (int i = 0; i < FLOWER_COUNT; i++) {
             if (collision(flowers + i, &bee)) {        
                 if (!has_food && !is_unlit[i]) {
@@ -172,11 +174,13 @@ int main() {
             if (wings) wings = 0;
             else wings = 1;
         }
+#define FLOWER_TIMER 45.0f
 
         for (int i = 0; i < FLOWER_COUNT; i++) {
             if (is_unlit[i]) {
                 flower_timer[i] += deltaTime;
-#define FLOWER_TIMER 7.0f
+                litness[i] += deltaTime / FLOWER_TIMER;
+                litness[i] = fmin(litness[i], 1.0f);
                 if (flower_timer[i] >= FLOWER_TIMER) {
                     is_unlit[i] = 0;
                     flower_timer[i] = 0.0f;

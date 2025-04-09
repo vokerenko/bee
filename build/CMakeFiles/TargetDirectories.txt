@@ -1,3 +1,0 @@
-/home/oleh/bee/build/CMakeFiles/bee.dir
-/home/oleh/bee/build/CMakeFiles/edit_cache.dir
-/home/oleh/bee/build/CMakeFiles/rebuild_cache.dir
