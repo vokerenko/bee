@@ -158,15 +158,15 @@ int main(int argc, char* argv[]) {
         bee_direction.y += random_float(-1.0f, 1.0f);
 
         normalize(&bee_direction);
-        // Update bee position using floating point math
+        // Update bee position using floating point math 
         bee_pos.x += speed * bee_direction.x * deltaTime;
         bee_pos.y += speed * bee_direction.y * deltaTime;
 
-        // Clamp position to stay inside screen bounds
+        // Clamp position to stay inside screen bounds 
         bee_pos.x = fmaxf(0, fminf(bee_pos.x, SCREEN_WIDTH - bee.w));
         bee_pos.y = fmaxf(0, fminf(bee_pos.y, SCREEN_HEIGHT - bee.h));
 
-        // Update integer position for rendering
+        // Update integer position for rendering 
         bee.x = (int)roundf(bee_pos.x);
         bee.y = (int)roundf(bee_pos.y);
         for (int i = 0; i < FLOWER_COUNT; i++) {
